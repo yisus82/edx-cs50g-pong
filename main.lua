@@ -36,6 +36,9 @@ function love.load()
   -- use nearest-neighbor filtering on upscaling and downscaling to prevent blurring of text and graphics
   love.graphics.setDefaultFilter('nearest', 'nearest')
 
+  -- set the title of our application window
+  love.window.setTitle('Pong')
+
   -- "seed" the RNG so that calls to random are always random
   -- use the current time, since that will vary on startup every time
   math.randomseed(os.time())
@@ -44,8 +47,8 @@ function love.load()
 
   -- initialize our virtual resolution, which will be rendered within our actual window no matter its dimensions
   push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, windowWidth, windowHeight, {
-    fullscreen = true,
-    resizable = true,
+    fullscreen = false,
+    resizable = false,
     vsync = true
   })
 
@@ -94,6 +97,8 @@ function love.keypressed(key, _, _)
       gameState = 'start'
       ball:reset()
     end
+  elseif key == "f" then
+    push:switchFullscreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
   end
 end
 
@@ -125,6 +130,10 @@ function love.update(dt)
     ball:update(dt)
     player1:update(dt)
     player2:update(dt)
+    -- set the title of our application window
+    love.window.setTitle('Pong - FPS: ' .. tostring(love.timer.getFPS()))
+  else
+    love.window.setTitle('Pong')
   end
 end
 
