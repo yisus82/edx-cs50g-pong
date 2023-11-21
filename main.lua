@@ -27,7 +27,7 @@ VIRTUAL_WIDTH = 432
 VIRTUAL_HEIGHT = 243
 PADDLE_SPEED = 200
 
-local windowWidth, windowHeight, smallFont, scoreFont, player1Score, player2Score, player1, player2, ball, gameState, servingPlayer
+local windowWidth, windowHeight, smallFont, largeFont, scoreFont, player1Score, player2Score, player1, player2, ball, gameState, servingPlayer, winningPlayer
 
 --[[
   Runs when the game first starts up, only once; used to initialize the game.
@@ -52,14 +52,11 @@ function love.load()
     vsync = true
   })
 
-  -- more "retro-looking" font object we can use for any text
+  -- initialize our nice-looking retro text fonts
   smallFont = love.graphics.newFont('font.ttf', 8)
-
-  -- set LÖVE2D's active font to the smallFont obect
-  love.graphics.setFont(smallFont)
-
-  -- larger font for drawing the score on the screen
+  largeFont = love.graphics.newFont('font.ttf', 16)
   scoreFont = love.graphics.newFont('font.ttf', 32)
+  love.graphics.setFont(smallFont)
 
   -- initialize score variables, used for rendering on the screen and keeping track of the winner
   player1Score = 0
@@ -67,6 +64,9 @@ function love.load()
 
   -- initialize the serving player; the player whose turn it is to serve will serve first
   servingPlayer = 1
+
+  -- initialize the player who won the game; obviously, no one has won yet
+  winningPlayer = 0
 
   -- initialize our player paddles; make them global so that they can be
   -- detected by other functions and modules
@@ -98,6 +98,18 @@ function love.keypressed(key, _, _)
       gameState = 'serve'
     elseif gameState == 'serve' then
       gameState = 'play'
+    elseif gameState == 'done' then
+      gameState = 'serve'
+      ball:reset()
+      player1Score = 0
+      player2Score = 0
+      -- decide serving player as the opposite of who won
+      if winningPlayer == 1 then
+        servingPlayer = 2
+      else
+        servingPlayer = 1
+      end
+      winningPlayer = 0
     end
   elseif key == "f" then
     push:switchFullscreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT)
@@ -186,6 +198,13 @@ function love.update(dt)
       ball:reset()
       gameState = 'serve'
       servingPlayer = 1
+
+      -- if we've reached a score of 10, the game is over; we set the
+      -- state to done so we can show the victory message
+      if player2Score == 10 then
+        winningPlayer = 2
+        gameState = 'done'
+      end
     end
 
     if ball.x > VIRTUAL_WIDTH then
@@ -193,6 +212,13 @@ function love.update(dt)
       ball:reset()
       gameState = 'serve'
       servingPlayer = 2
+
+      -- if we've reached a score of 10, the game is over; we set the
+      -- state to done so we can show the victory message
+      if player1Score == 10 then
+        winningPlayer = 1
+        gameState = 'done'
+      end
     end
 
     -- update positions based on velocity scaled by deltaTime
@@ -227,6 +253,11 @@ function love.draw()
     love.graphics.printf('Player ' .. tostring(servingPlayer) .. "'s serve!",
       0, 10, VIRTUAL_WIDTH, 'center')
     love.graphics.printf('Press Enter to serve!', 0, 20, VIRTUAL_WIDTH, 'center')
+  elseif gameState == 'done' then
+    love.graphics.setFont(largeFont)
+    love.graphics.printf('Player ' .. tostring(winningPlayer) .. ' wins!', 0, 10, VIRTUAL_WIDTH, 'center')
+    love.graphics.setFont(smallFont)
+    love.graphics.printf('Press Enter to restart!', 0, 30, VIRTUAL_WIDTH, 'center')
   end
 
   -- draw score; we need to switch the font to use before actually printing
