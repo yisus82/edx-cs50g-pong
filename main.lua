@@ -27,7 +27,7 @@ VIRTUAL_WIDTH = 432
 VIRTUAL_HEIGHT = 243
 PADDLE_SPEED = 200
 
-local windowWidth, windowHeight, smallFont, largeFont, scoreFont, player1Score, player2Score, player1, player2, ball, gameState, servingPlayer, winningPlayer
+local windowWidth, windowHeight, smallFont, largeFont, scoreFont, sounds, player1Score, player2Score, player1, player2, ball, gameState, servingPlayer, winningPlayer
 
 --[[
   Runs when the game first starts up, only once; used to initialize the game.
@@ -48,7 +48,7 @@ function love.load()
   -- initialize our virtual resolution, which will be rendered within our actual window no matter its dimensions
   push:setupScreen(VIRTUAL_WIDTH, VIRTUAL_HEIGHT, windowWidth, windowHeight, {
     fullscreen = false,
-    resizable = false,
+    resizable = true,
     vsync = true
   })
 
@@ -57,6 +57,13 @@ function love.load()
   largeFont = love.graphics.newFont('font.ttf', 16)
   scoreFont = love.graphics.newFont('font.ttf', 32)
   love.graphics.setFont(smallFont)
+
+  -- initialize our sound effects
+  sounds = {
+    ['paddle_hit'] = love.audio.newSource('sounds/paddle_hit.wav', 'static'),
+    ['score'] = love.audio.newSource('sounds/score.wav', 'static'),
+    ['wall_hit'] = love.audio.newSource('sounds/wall_hit.wav', 'static')
+  }
 
   -- initialize score variables, used for rendering on the screen and keeping track of the winner
   player1Score = 0
@@ -166,6 +173,9 @@ function love.update(dt)
       else
         ball.dy = math.random(10, 150)
       end
+
+      -- play sound effect
+      sounds['paddle_hit']:play()
     end
     if ball:collides(player2) then
       ball.dx = -ball.dx * 1.03
@@ -177,18 +187,27 @@ function love.update(dt)
       else
         ball.dy = math.random(10, 150)
       end
+
+      -- play sound effect
+      sounds['paddle_hit']:play()
     end
 
     -- detect upper and lower screen boundary collision and reverse if collided
     if ball.y <= 0 then
       ball.y = 0
       ball.dy = -ball.dy
+
+      -- play sound effect
+      sounds['wall_hit']:play()
     end
 
     -- -4 to account for the ball's size
     if ball.y >= VIRTUAL_HEIGHT - 4 then
       ball.y = VIRTUAL_HEIGHT - 4
       ball.dy = -ball.dy
+
+      -- play sound effect
+      sounds['wall_hit']:play()
     end
 
     -- if we reach the left or right edge of the screen,
@@ -198,6 +217,9 @@ function love.update(dt)
       ball:reset()
       gameState = 'serve'
       servingPlayer = 1
+
+      -- play sound effect
+      sounds['score']:play()
 
       -- if we've reached a score of 10, the game is over; we set the
       -- state to done so we can show the victory message
@@ -212,6 +234,9 @@ function love.update(dt)
       ball:reset()
       gameState = 'serve'
       servingPlayer = 2
+
+      -- play sound effect
+      sounds['score']:play()
 
       -- if we've reached a score of 10, the game is over; we set the
       -- state to done so we can show the victory message
@@ -272,4 +297,12 @@ function love.draw()
 
   -- end rendering at virtual resolution
   push:apply('end')
+end
+
+--[[
+  Called by LÖVE whenever we resize the screen; here, we just want to pass in the
+  width and height to push so our virtual resolution can be resized as needed.
+]]
+function love.resize(w, h)
+  push:resize(w, h)
 end
